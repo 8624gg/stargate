@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>STAR GATE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--purple:#a78bfa;--pink:#f472b6;--green:#34d399;--gold:#fbbf24;--dark:#0a0a0f;--card:#13131f;--border:rgba(255,255,255,0.08);}
+body{background:var(--dark);color:#fff;font-family:'Noto Sans KR',sans-serif;min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden;}
+.bg{position:fixed;inset:0;background:radial-gradient(ellipse 100% 50% at 50% 0%,rgba(138,43,226,0.22) 0%,transparent 60%),radial-gradient(ellipse 80% 40% at 50% 100%,rgba(244,114,182,0.08) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+/* ── 스텝 네비 ── */
+.step-nav{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:300;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 20px 10px;}
+.step-row{display:flex;align-items:center;}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all 0.3s;border:2px solid rgba(255,255,255,0.1);color:#555;}
+.step-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+.step-dot.active{background:linear-gradient(135deg,var(--purple),var(--pink));border-color:transparent;color:#fff;box-shadow:0 0 12px rgba(167,139,250,0.5);}
+.step-line{flex:1;height:2px;background:rgba(255,255,255,0.08);transition:background 0.4s;}
+.step-line.done{background:var(--green);}
+.step-labels{display:flex;justify-content:space-between;margin-top:5px;}
+.step-lbl{font-size:9px;color:#555;text-align:center;width:28px;transition:color 0.3s;}
+.step-lbl.active{color:var(--purple);}.step-lbl.done{color:var(--green);}
+
+/* ── 화면 공통 ── */
+.screen{position:relative;z-index:1;display:none;padding-top:68px;animation:sIn 0.4s ease both;}
+.screen.active{display:block;}
+@keyframes sIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);}
+.logo{font-family:'Black Han Sans',sans-serif;font-size:17px;letter-spacing:3px;background:linear-gradient(135deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.badge{font-size:11px;color:var(--purple);border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:3px 11px;}
+.btn-main{width:100%;padding:17px;border-radius:13px;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Black Han Sans',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;box-shadow:0 6px 22px rgba(167,139,250,0.3);}
+.btn-main:active{transform:scale(0.97);}
+.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:13px 16px;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);z-index:200;}
+.bottom-note{text-align:center;font-size:10px;color:#555;margin-top:6px;}
+
+/* ════ STAGE 1 ════ */
+#s1{padding-bottom:100px;}
+.hero-banner{margin:16px;background:linear-gradient(135deg,rgba(167,139,250,0.15),rgba(244,114,182,0.15));border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:26px 20px;text-align:center;animation:glow 3s ease-in-out infinite;}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(167,139,250,0.15);}50%{box-shadow:0 0 35px rgba(244,114,182,0.25);}}
+.hero-emoji{font-size:46px;margin-bottom:10px;animation:float 2.5s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.hero-title{font-family:'Black Han Sans',sans-serif;font-size:21px;margin-bottom:7px;}
+.hero-sub{font-size:13px;color:#aaa;line-height:1.7;}
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 14px;}
+.feat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;text-align:center;}
+.feat-em{font-size:24px;margin-bottom:7px;}.feat-name{font-size:13px;font-weight:700;margin-bottom:3px;}.feat-desc{font-size:11px;color:#888;}
+.flow-steps{margin:0 16px;}
+.flow-item{display:flex;align-items:center;gap:14px;padding:12px 15px;background:var(--card);border:1px solid var(--border);border-radius:13px;margin-bottom:8px;}
+.flow-num{font-family:'Black Han Sans',sans-serif;font-size:19px;color:var(--purple);min-width:30px;}
+.flow-icon{font-size:22px;min-width:30px;text-align:center;}
+.flow-info h3{font-size:13px;font-weight:700;margin-bottom:2px;}.flow-info p{font-size:11px;color:#888;line-height:1.4;}
+
+/* ════ STAGE 2 ════ */
+#s2{padding-bottom:30px;}
+.ai-banner{margin:14px 16px;background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(52,211,153,0.1));border:1px solid rgba(167,139,250,0.2);border-radius:16px;padding:15px;text-align:center;}
+.ai-banner-title{font-family:'Black Han Sans',sans-serif;font-size:15px;margin-bottom:4px;}.ai-banner-sub{font-size:12px;color:#aaa;line-height:1.5;}
+.analyze-card{margin:0 16px 12px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:17px;}
+.ai-big{font-size:34px;text-align:center;margin-bottom:11px;animation:bob 1s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.ai-lbl{text-align:center;font-family:'Black Han Sans',sans-serif;font-size:13px;margin-bottom:14px;color:var(--purple);}
+.a-rows{display:flex;flex-direction:column;gap:8px;}
+.a-row{display:flex;align-items:center;gap:10px;padding:9px 11px;background:rgba(255,255,255,0.03);border-radius:9px;border:1px solid var(--border);}
+.a-icon{font-size:16px;min-width:22px;text-align:center;}.a-content{flex:1;}.a-name{font-size:12px;font-weight:700;margin-bottom:4px;}
+.a-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.a-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--pink));width:0%;transition:width 0.7s ease;}
+.a-st{font-size:11px;color:#555;min-width:36px;text-align:right;}.a-st.done{color:var(--green);}
+.prog-wrap{margin-top:14px;text-align:center;}
+.prog-num{font-family:'Black Han Sans',sans-serif;font-size:30px;background:linear-gradient(135deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.prog-lbl{font-size:11px;color:#888;margin-top:3px;}
+.prog-bar{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:3px;width:0%;transition:width 0.4s ease;}
+.thumb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:0 16px;}
+.th{aspect-ratio:1;border-radius:6px;background:linear-gradient(135deg,#1a0a2e,#0d1a3a);position:relative;overflow:hidden;border:2px solid transparent;transition:border-color 0.3s;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.th.scan{animation:sg 0.5s ease-in-out;border-color:var(--purple);}.th.sel{border-color:var(--green);}.th.rej{opacity:0.2;}
+@keyframes sg{0%{box-shadow:0 0 0 0 rgba(167,139,250,0.7);}100%{box-shadow:0 0 0 5px rgba(167,139,250,0);}}
+.th-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:0;}
+.th.sel .th-ov{opacity:1;background:rgba(52,211,153,0.18);}
+
+/* ════ STAGE 3: 미리보기 ════ */
+#s3{padding-bottom:100px;}
+.preview-hero{margin:14px 16px;position:relative;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#1a0a2e,#0a1a3e,#1a0a1a);aspect-ratio:9/16;max-height:360px;display:flex;align-items:center;justify-content:center;}
+.prev-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 80%,rgba(138,43,226,0.5) 0%,transparent 60%);}
+.prev-lights{position:absolute;inset:0;display:flex;justify-content:space-around;padding-top:10px;}
+.prev-lb{width:2px;height:90px;background:linear-gradient(to bottom,rgba(255,255,255,0.5),transparent);transform-origin:top;animation:bm ease-in-out infinite;}
+.prev-lb:nth-child(1){animation-duration:3s;}.prev-lb:nth-child(2){animation-duration:4s;background:linear-gradient(to bottom,rgba(167,139,250,0.8),transparent);}
+.prev-lb:nth-child(3){animation-duration:3.5s;background:linear-gradient(to bottom,rgba(244,114,182,0.8),transparent);}.prev-lb:nth-child(4){animation-duration:5s;}
+@keyframes bm{0%,100%{opacity:0.5;}50%{opacity:1;}}
+.prev-sil{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:85px;height:200px;background:linear-gradient(to top,rgba(0,0,0,0.9),rgba(50,0,80,0.6));clip-path:polygon(35% 0%,65% 0%,75% 15%,80% 35%,75% 55%,70% 100%,30% 100%,25% 55%,20% 35%,25% 15%);filter:blur(1px);}
+.prev-center{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.prev-btn{width:66px;height:66px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.4);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:25px;cursor:pointer;animation:pp 2s ease-in-out infinite;transition:all 0.2s;}
+.prev-btn:active{transform:scale(0.9);}
+@keyframes pp{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.2);}50%{box-shadow:0 0 0 13px rgba(255,255,255,0);}}
+.prev-note{font-size:12px;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.55);border-radius:20px;padding:5px 14px;backdrop-filter:blur(10px);}
+.prev-free{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;}
+
+/* 15초 재생 바 */
+.prev-progress{position:absolute;bottom:0;left:0;right:0;padding:10px 14px 14px;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);}
+.prev-time-bar{height:3px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+.prev-time-fill{height:100%;background:#fff;border-radius:2px;width:0%;transition:width 0.5s linear;}
+.prev-time-row{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.7);}
+
+.song-info{margin:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;}
+.song-meta{display:flex;justify-content:space-between;margin-bottom:6px;}
+.song-date{font-size:11px;color:#666;}.song-venue{font-size:11px;color:var(--purple);}
+.song-title{font-family:'Black Han Sans',sans-serif;font-size:18px;margin-bottom:3px;}.song-artist{font-size:12px;color:#888;}
+.mini-title{font-size:12px;color:#555;letter-spacing:2px;margin:0 16px 10px;}
+.mini-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 16px;}
+.mini-th{aspect-ratio:1;border-radius:8px;position:relative;overflow:hidden;border:2px solid transparent;cursor:pointer;transition:all 0.2s;}
+.mini-th.atv{border-color:var(--purple);transform:scale(1.07);}
+.mini-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.mini-sc{position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.7);border-radius:4px;padding:1px 4px;font-size:8px;color:var(--green);}
+.done-note{margin:12px 16px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:13px;padding:13px;text-align:center;}
+.done-note-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px;}
+.done-note-sub{font-size:12px;color:#aaa;}
+
+/* ════ STAGE 4: 결제 ════ */
+#s4{padding-bottom:120px;}
+.pay-intro{margin:14px 16px 16px;text-align:center;}
+.pay-intro-em{font-size:34px;margin-bottom:8px;}
+.pay-intro-title{font-family:'Black Han Sans',sans-serif;font-size:17px;margin-bottom:5px;}
+.pay-intro-sub{font-size:12px;color:#aaa;line-height:1.6;}
+
+/* 상품 선택 */
+.pay-options{display:flex;flex-direction:column;gap:9px;margin:0 16px;}
+.pay-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all 0.2s;position:relative;}
+.pay-card:active{transform:scale(0.98);}
+.pay-card.active{border-color:rgba(167,139,250,0.5);background:rgba(167,139,250,0.08);}
+.pay-card .check{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.2s;}
+.pay-card.active .check{background:var(--purple);border-color:var(--purple);}
+.pi{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.pi-v{background:rgba(96,165,250,0.15);}.pi-p{background:rgba(167,139,250,0.15);}.pi-b{background:linear-gradient(135deg,rgba(167,139,250,0.2),rgba(244,114,182,0.2));}
+.pc{flex:1;}.pn{font-weight:700;font-size:13px;margin-bottom:2px;}.pd{font-size:11px;color:#888;line-height:1.3;}
+.pr{text-align:right;margin-right:28px;}
+.pp-price{font-family:'Black Han Sans',sans-serif;font-size:18px;}.pu{font-size:11px;color:#888;}.ps{font-size:11px;color:var(--green);margin-top:1px;}
+
+/* 동의 박스 */
+.consent-box{margin:12px 16px;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.2);border-radius:13px;padding:14px;}
+.c-ttl{font-size:12px;font-weight:700;color:var(--purple);margin-bottom:10px;}
+.c-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.c-row:last-child{margin-bottom:0;}
+.chk{width:21px;height:21px;border-radius:6px;border:2px solid rgba(167,139,250,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.2s;font-size:11px;}
+.chk.on{background:var(--purple);border-color:var(--purple);}
+.c-text{font-size:12px;color:#ccc;line-height:1.6;flex:1;}
+.tag-r{font-size:9px;color:var(--pink);background:rgba(244,114,182,0.1);border-radius:4px;padding:1px 5px;margin-left:3px;vertical-align:middle;}
+.tag-o{font-size:9px;color:#888;background:rgba(255,255,255,0.05);border-radius:4px;padding:1px 5px;margin-left:3px;vertical-align:middle;}
+.ben{color:var(--green);font-size:11px;display:block;margin-top:2px;}
+.privacy-link{color:var(--purple);text-decoration:underline;cursor:pointer;font-size:11px;}
+
+/* 결제 수단 선택 */
+.pay-method-wrap{margin:12px 16px;}
+.pay-method-title{font-size:12px;font-weight:700;color:#aaa;margin-bottom:10px;letter-spacing:1px;}
+.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pay-method{background:var(--card);border:2px solid var(--border);border-radius:13px;padding:14px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;}
+.pay-method:active{transform:scale(0.97);}
+.pay-method.selected{border-color:rgba(167,139,250,0.5);background:rgba(167,139,250,0.08);}
+.method-logo{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;}
+.ml-kakao{background:#FEE500;color:#000;font-size:13px;font-weight:900;}
+.ml-toss{background:#0064FF;color:#fff;font-size:12px;font-weight:900;}
+.ml-naver{background:#03C75A;color:#fff;font-size:13px;font-weight:900;}
+.ml-phone{background:rgba(255,255,255,0.1);font-size:20px;}
+.method-info .m-name{font-size:13px;font-weight:700;}
+.method-info .m-desc{font-size:10px;color:#888;margin-top:1px;}
+.method-check{margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 0.2s;flex-shrink:0;}
+.pay-method.selected .method-check{background:var(--purple);border-color:var(--purple);}
+
+/* 결제 하단 */
+.pay-bottom{padding:13px 16px;}
+.pay-total{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px 14px;border:1px solid var(--border);}
+.pay-total-label{font-size:13px;color:#aaa;}
+.pay-total-price{font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--purple);}
+
+/* ════ STAGE 5 ════ */
+#s5{padding-bottom:40px;}
+.done-hero{text-align:center;padding:24px 24px 18px;}
+.done-emoji{font-size:54px;animation:celebrate 0.6s ease both;}
+@keyframes celebrate{0%{transform:scale(0) rotate(-20deg);}70%{transform:scale(1.2) rotate(5deg);}100%{transform:scale(1) rotate(0);}}
+.done-title{font-family:'Black Han Sans',sans-serif;font-size:21px;margin:10px 0 5px;}
+.done-sub{font-size:13px;color:#aaa;line-height:1.6;}
+.result-stats{display:flex;gap:8px;margin:0 16px 13px;}
+.stat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 6px;text-align:center;}
+.stat-num{font-family:'Black Han Sans',sans-serif;font-size:19px;color:var(--purple);}.stat-lbl{font-size:10px;color:#666;margin-top:2px;}
+.bc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:0 16px 13px;}
+.bc{border-radius:11px;overflow:hidden;position:relative;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;animation:pop 0.4s ease both;}
+.bc.hero{grid-column:span 2;aspect-ratio:16/9;}
+@keyframes pop{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
+.bc-glow{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 80%,rgba(138,43,226,0.4) 0%,transparent 60%);}
+.bc-em{font-size:30px;filter:drop-shadow(0 0 10px rgba(167,139,250,0.8));position:relative;}
+.bc.hero .bc-em{font-size:44px;}
+.bc-rank{position:absolute;top:6px;left:6px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;}
+.bc-score{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.65);border-radius:6px;padding:2px 6px;font-size:9px;color:var(--green);}
+.bc-lbl{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,0.65);border-radius:6px;padding:2px 6px;font-size:8px;color:#ccc;}
+.share-section{margin:0 16px;background:var(--card);border:1px solid rgba(167,139,250,0.2);border-radius:14px;padding:16px;}
+.share-ttl{font-size:12px;color:var(--purple);font-weight:700;margin-bottom:11px;letter-spacing:1px;}
+.share-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.share-btn{display:flex;align-items:center;gap:5px;padding:8px 13px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;color:#fff;transition:transform 0.2s;}
+.share-btn:active{transform:scale(0.95);}
+.sb-tt{background:#010101;border:1px solid rgba(255,255,255,0.2);}
+.sb-ig{background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);}
+.sb-yt{background:#ff0000;}
+.sb-kk{background:#fee500;color:#000;}
+.dl-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:0 4px 16px rgba(167,139,250,0.3);}
+.kakao-note{text-align:center;font-size:11px;color:var(--green);margin-top:8px;}
+
+/* ════ 모달: 15초 미리보기 ════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;}
+.modal{background:#13131f;border:1px solid rgba(167,139,250,0.3);border-radius:20px;width:100%;max-width:360px;overflow:hidden;animation:modalIn 0.3s ease both;}
+@keyframes modalIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Black Han Sans',sans-serif;font-size:15px;}
+.modal-close{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:18px;}
+
+/* 미리보기 모달 플레이어 */
+.player-screen{width:100%;aspect-ratio:9/16;max-height:280px;background:linear-gradient(135deg,#1a0a2e,#0a1a3e);border-radius:14px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.player-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 80%,rgba(138,43,226,0.5) 0%,transparent 60%);}
+.player-lights{position:absolute;inset:0;display:flex;justify-content:space-around;padding-top:8px;}
+.pl{width:2px;height:70px;background:linear-gradient(to bottom,rgba(255,255,255,0.6),transparent);transform-origin:top;animation:bm ease-in-out infinite;}
+.pl:nth-child(1){animation-duration:3s;}.pl:nth-child(2){animation-duration:4s;background:linear-gradient(to bottom,rgba(167,139,250,0.9),transparent);}
+.pl:nth-child(3){animation-duration:3.5s;background:linear-gradient(to bottom,rgba(244,114,182,0.9),transparent);}.pl:nth-child(4){animation-duration:5s;}
+.player-sil{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60px;height:140px;background:linear-gradient(to top,rgba(0,0,0,0.9),rgba(50,0,80,0.6));clip-path:polygon(35% 0%,65% 0%,75% 15%,80% 35%,75% 55%,70% 100%,30% 100%,25% 55%,20% 35%,25% 15%);filter:blur(1px);}
+.player-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;}
+.player-play-btn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;}
+.player-play-btn:active{transform:scale(0.9);}
+.player-label{font-size:11px;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);border-radius:15px;padding:4px 11px;}
+.player-bottom{position:absolute;bottom:0;left:0;right:0;padding:8px 12px 10px;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);}
+.player-bar{height:3px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden;margin-bottom:5px;}
+.player-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:2px;width:0%;transition:width 0.3s linear;}
+.player-time{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.6);}
+.player-song{font-family:'Black Han Sans',sans-serif;font-size:14px;margin-bottom:3px;}
+.player-artist{font-size:11px;color:#888;margin-bottom:14px;}
+.player-free-badge{display:inline-block;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;margin-bottom:14px;}
+.player-cta{width:100%;padding:13px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;}
+
+/* ════ 모달: 개인정보처리방침 ════ */
+.privacy-modal .modal-body{max-height:60vh;overflow-y:auto;padding:18px;}
+.privacy-modal .modal-body::-webkit-scrollbar{width:4px;}
+.privacy-modal .modal-body::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);}
+.privacy-modal .modal-body::-webkit-scrollbar-thumb{background:rgba(167,139,250,0.4);border-radius:2px;}
+.privacy-section{margin-bottom:18px;}
+.privacy-section h3{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.privacy-section p{font-size:12px;color:#bbb;line-height:1.8;}
+.privacy-section ul{font-size:12px;color:#bbb;line-height:1.8;padding-left:16px;}
+.privacy-section li{margin-bottom:4px;}
+.privacy-agree-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Black Han Sans',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;margin-top:16px;}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<!-- 스텝 네비 -->
+<div class="step-nav">
+  <div class="step-row">
+    <div class="step-dot active" id="dot1">1</div><div class="step-line" id="line1"></div>
+    <div class="step-dot" id="dot2">2</div><div class="step-line" id="line2"></div>
+    <div class="step-dot" id="dot3">3</div><div class="step-line" id="line3"></div>
+    <div class="step-dot" id="dot4">4</div><div class="step-line" id="line4"></div>
+    <div class="step-dot" id="dot5">5</div>
+  </div>
+  <div class="step-labels">
+    <div class="step-lbl active" id="lbl1">인트로</div>
+    <div class="step-lbl" id="lbl2">AI선별</div>
+    <div class="step-lbl" id="lbl3">미리보기</div>
+    <div class="step-lbl" id="lbl4">결제</div>
+    <div class="step-lbl" id="lbl5">완료</div>
+  </div>
+</div>
+
+<!-- ════ S1: 인트로 ════ -->
+<div class="screen active" id="s1">
+  <div class="top-bar"><div class="logo">★ STAR GATE</div><div class="badge">🎤 홍대점</div></div>
+  <div class="hero-banner">
+    <div class="hero-emoji">🎬</div>
+    <div class="hero-title">AI가 만드는 내 뮤직비디오</div>
+    <div class="hero-sub">노래방에서 부른 내 노래,<br>AI가 <strong style="color:var(--purple)">자동으로</strong> 숏폼 영상 & 베스트컷으로!</div>
+  </div>
+  <div class="feature-grid">
+    <div class="feat"><div class="feat-em">⚡</div><div class="feat-name">10초 완성</div><div class="feat-desc">AI 자동 편집</div></div>
+    <div class="feat"><div class="feat-em">📸</div><div class="feat-name">베스트컷 10장</div><div class="feat-desc">AI 자동 선별</div></div>
+    <div class="feat"><div class="feat-em">🎬</div><div class="feat-name">세로형 숏폼</div><div class="feat-desc">9:16 SNS 최적화</div></div>
+    <div class="feat"><div class="feat-em">🚀</div><div class="feat-name">즉시 공유</div><div class="feat-desc">틱톡·인스타·유튜브</div></div>
+  </div>
+  <div class="flow-steps">
+    <div class="flow-item"><span class="flow-num">01</span><span class="flow-icon">🤖</span><div class="flow-info"><h3>AI 베스트컷 선별</h3><p>47장 사진 중 AI가 최고의 10컷 선택</p></div></div>
+    <div class="flow-item"><span class="flow-num">02</span><span class="flow-icon">👀</span><div class="flow-info"><h3>미리보기 확인</h3><p>15초 영상 + 사진 미리보기 무료!</p></div></div>
+    <div class="flow-item"><span class="flow-num">03</span><span class="flow-icon">💳</span><div class="flow-info"><h3>결제 & 다운로드</h3><p>1,500원~3,000원 · 카카오페이·토스</p></div></div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-main" onclick="goStage(2)">🎤 &nbsp;내 영상 & 사진 받기</button>
+    <div class="bottom-note">회원가입 불필요 · 미리보기 완전 무료</div>
+  </div>
+</div>
+
+<!-- ════ S2: AI 선별 ════ -->
+<div class="screen" id="s2">
+  <div class="top-bar"><div class="logo">★ STAR GATE</div><div class="badge">AI 베스트컷 선별</div></div>
+  <div class="ai-banner">
+    <div class="ai-banner-title">🤖 AI 베스트컷 자동 선별 중</div>
+    <div class="ai-banner-sub">47장 사진 중 가장 빛나는 순간 10장을 AI가 골라드립니다</div>
+  </div>
+  <div class="analyze-card" id="aCard">
+    <div class="ai-big">🤖</div>
+    <div class="ai-lbl" id="aiLbl">AI 분석 시작 중...</div>
+    <div class="a-rows">
+      <div class="a-row"><div class="a-icon">😊</div><div class="a-content"><div class="a-name">표정 분석</div><div class="a-bar"><div class="a-fill" id="f1"></div></div></div><div class="a-st" id="st1">대기</div></div>
+      <div class="a-row"><div class="a-icon">💡</div><div class="a-content"><div class="a-name">조명 품질</div><div class="a-bar"><div class="a-fill" id="f2"></div></div></div><div class="a-st" id="st2">대기</div></div>
+      <div class="a-row"><div class="a-icon">🎯</div><div class="a-content"><div class="a-name">구도 & 포커스</div><div class="a-bar"><div class="a-fill" id="f3"></div></div></div><div class="a-st" id="st3">대기</div></div>
+      <div class="a-row"><div class="a-icon">✨</div><div class="a-content"><div class="a-name">하이라이트 감지</div><div class="a-bar"><div class="a-fill" id="f4"></div></div></div><div class="a-st" id="st4">대기</div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-num" id="pNum">0%</div>
+      <div class="prog-lbl">사진 <span id="pCnt">0</span> / 47장 분석 중</div>
+      <div class="prog-bar"><div class="prog-fill" id="pFill"></div></div>
+    </div>
+  </div>
+  <div class="thumb-grid" id="tGrid"></div>
+</div>
+
+<!-- ════ S3: 미리보기 ════ -->
+<div class="screen" id="s3">
+  <div class="top-bar"><div class="logo">★ STAR GATE</div><div class="badge">미리보기</div></div>
+  <div class="preview-hero">
+    <div class="prev-bg"></div>
+    <div class="prev-lights"><div class="prev-lb"></div><div class="prev-lb"></div><div class="prev-lb"></div><div class="prev-lb"></div></div>
+    <div class="prev-sil"></div>
+    <div class="prev-center">
+      <div class="prev-btn" onclick="openPreviewModal()">▶</div>
+      <div class="prev-note">탭해서 15초 미리보기 ▶</div>
+    </div>
+    <div class="prev-free">FREE 미리보기</div>
+    <div class="prev-progress">
+      <div class="prev-time-bar"><div class="prev-time-fill" id="prevFill"></div></div>
+      <div class="prev-time-row"><span id="prevCur">0:00</span><span>0:15</span></div>
+    </div>
+  </div>
+  <div class="song-info">
+    <div class="song-meta"><span class="song-date">2026.03.28 · 오후 9:42</span><span class="song-venue">★ 홍대 1호점</span></div>
+    <div class="song-title">밤편지</div>
+    <div class="song-artist">아이유 (IU) · AI 무대 합성</div>
+  </div>
+  <div class="mini-title">📸 AI 선별 베스트컷 10장</div>
+  <div class="mini-grid" id="miniGrid"></div>
+  <div class="done-note" style="margin:12px 16px;">
+    <div class="done-note-title">✅ AI 선별 완료!</div>
+    <div class="done-note-sub">47장 중 베스트 10컷 · 결제 후 고화질 다운로드</div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-main" onclick="goStage(4)">💳 &nbsp;결제하고 다운로드</button>
+    <div class="bottom-note">1,500원 ~ 3,000원 · 카카오페이·토스·네이버페이</div>
+  </div>
+</div>
+
+<!-- ════ S4: 결제 ════ -->
+<div class="screen" id="s4">
+  <div class="top-bar"><div class="logo">★ STAR GATE</div><div class="badge">결제</div></div>
+  <div class="pay-intro">
+    <div class="pay-intro-em">🛒</div>
+    <div class="pay-intro-title">상품 & 결제 수단 선택</div>
+    <div class="pay-intro-sub">결제 후 카카오톡으로 즉시 전송!</div>
+  </div>
+
+  <!-- 상품 선택 -->
+  <div style="font-size:12px;font-weight:700;color:#aaa;letter-spacing:1px;margin:0 16px 10px;">📦 상품 선택</div>
+  <div class="pay-options">
+    <div class="pay-card" id="pc1" onclick="selPay(1)">
+      <div class="pi pi-v">🎬</div>
+      <div class="pc"><div class="pn">숏폼 영상</div><div class="pd">풀버전 고화질 · 세로형 9:16 · MP4</div></div>
+      <div class="pr"><div class="pp-price">1,500<span class="pu">원</span></div></div>
+      <div class="check"></div>
+    </div>
+    <div class="pay-card active" id="pc2" onclick="selPay(2)">
+      <div class="pi pi-p">📸</div>
+      <div class="pc"><div class="pn">AI 베스트컷 10장</div><div class="pd">AI 엄선 10컷 · AI 배경 합성 · JPG</div></div>
+      <div class="pr"><div class="pp-price">2,000<span class="pu">원</span></div></div>
+      <div class="check">✓</div>
+    </div>
+    <div class="pay-card" id="pc3" onclick="selPay(3)">
+      <div class="pi pi-b">🎁</div>
+      <div class="pc"><div class="pn">영상 + 사진 묶음 ⭐</div><div class="pd">숏폼 영상 + 베스트컷 10장 세트</div></div>
+      <div class="pr"><div class="pp-price">3,000<span class="pu">원</span></div><div class="ps">500원 절약</div></div>
+      <div class="check"></div>
+    </div>
+  </div>
+
+  <!-- 결제 수단 -->
+  <div class="pay-method-wrap">
+    <div class="pay-method-title">💳 결제 수단 선택</div>
+    <div class="pay-methods">
+      <div class="pay-method selected" id="pm1" onclick="selMethod(1)">
+        <div class="method-logo ml-kakao">K</div>
+        <div class="method-info"><div class="m-name">카카오페이</div><div class="m-desc">간편 · 빠른 결제</div></div>
+        <div class="method-check">✓</div>
+      </div>
+      <div class="pay-method" id="pm2" onclick="selMethod(2)">
+        <div class="method-logo ml-toss">T</div>
+        <div class="method-info"><div class="m-name">토스페이</div><div class="m-desc">간편 · 빠른 결제</div></div>
+        <div class="method-check"></div>
+      </div>
+      <div class="pay-method" id="pm3" onclick="selMethod(3)">
+        <div class="method-logo ml-naver">N</div>
+        <div class="method-info"><div class="m-name">네이버페이</div><div class="m-desc">네이버 포인트 사용</div></div>
+        <div class="method-check"></div>
+      </div>
+      <div class="pay-method" id="pm4" onclick="selMethod(4)">
+        <div class="method-logo ml-phone">📱</div>
+        <div class="method-info"><div class="m-name">휴대폰 결제</div><div class="m-desc">통신사 소액결제</div></div>
+        <div class="method-check"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 동의 -->
+  <div class="consent-box">
+    <div class="c-ttl">📋 동의 확인</div>
+    <div class="c-row">
+      <div class="chk on">✓</div>
+      <div class="c-text">
+        AI 영상 제작 및 다운로드 서비스 이용<span class="tag-r">필수</span>
+        <span class="ben">• 촬영 영상은 7일 후 자동 삭제</span>
+        <span class="privacy-link" onclick="openPrivacyModal()">개인정보처리방침 보기 →</span>
+      </div>
+    </div>
+    <div class="c-row">
+      <div class="chk" id="chk2" onclick="tgC()"></div>
+      <div class="c-text">
+        나도가수다 유튜브 채널 업로드 동의<span class="tag-o">선택</span>
+        <span class="ben">• 동의 시 베스트컷 500원 할인!</span>
+      </div>
+    </div>
+    <div class="c-row">
+      <div class="chk" id="chk3" onclick="tgC3()"></div>
+      <div class="c-text">
+        마케팅 수신 동의 (이벤트·할인 알림)<span class="tag-o">선택</span>
+        <span class="ben">• 동의 시 다음 방문 할인쿠폰 증정!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 최종 결제 -->
+  <div class="bottom-bar">
+    <div class="pay-total">
+      <span class="pay-total-label">최종 결제 금액</span>
+      <span class="pay-total-price" id="totalPrice">2,000원</span>
+    </div>
+    <button class="btn-main" id="payBtn" onclick="doPay()">카카오페이로 결제하기</button>
+    <div class="bottom-note">결제 후 카카오톡으로 즉시 전송</div>
+  </div>
+</div>
+
+<!-- ════ S5: 완료 ════ -->
+<div class="screen" id="s5">
+  <div class="top-bar"><div class="logo">★ STAR GATE</div><div class="badge">✅ 완료</div></div>
+  <div class="done-hero">
+    <div class="done-emoji">🎉</div>
+    <div class="done-title">완성! 지금 바로 다운로드</div>
+    <div class="done-sub">AI 베스트컷 10장이 준비됐어요<br>카카오톡으로도 전송 완료!</div>
+  </div>
+  <div class="result-stats">
+    <div class="stat"><div class="stat-num">47</div><div class="stat-lbl">총 촬영</div></div>
+    <div class="stat"><div class="stat-num">10</div><div class="stat-lbl">베스트컷</div></div>
+    <div class="stat"><div class="stat-num">96</div><div class="stat-lbl">평균점수</div></div>
+  </div>
+  <div class="bc-grid" id="bcGrid"></div>
+  <div class="share-section">
+    <div class="share-ttl">📤 SNS에 바로 공유하세요!</div>
+    <div class="share-btns">
+      <button class="share-btn sb-tt">♪ TikTok</button>
+      <button class="share-btn sb-ig">◈ Instagram</button>
+      <button class="share-btn sb-yt">▶ YouTube</button>
+      <button class="share-btn sb-kk">💬 카카오</button>
+    </div>
+    <button class="dl-btn">📥 &nbsp;베스트컷 10장 다운로드</button>
+    <div class="kakao-note">📱 카카오톡으로 링크 전송 완료!</div>
+  </div>
+</div>
+
+<!-- ════ 모달: 15초 미리보기 ════ -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎬 15초 무료 미리보기</div>
+      <button class="modal-close" onclick="closePreviewModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="player-screen">
+        <div class="player-bg"></div>
+        <div class="player-lights"><div class="pl"></div><div class="pl"></div><div class="pl"></div><div class="pl"></div></div>
+        <div class="player-sil"></div>
+        <div class="player-overlay">
+          <div class="player-play-btn" id="playerBtn" onclick="togglePlay()">▶</div>
+          <div class="player-label" id="playerLabel">탭하여 재생</div>
+        </div>
+        <div class="player-bottom">
+          <div class="player-bar"><div class="player-fill" id="playerFill"></div></div>
+          <div class="player-time"><span id="playerTime">0:00</span><span>0:15 · 미리보기</span></div>
+        </div>
+      </div>
+      <div class="player-free-badge">🎁 무료 15초 미리보기</div>
+      <div class="player-song">밤편지</div>
+      <div class="player-artist">아이유 (IU) · AI 무대 합성 · 홍대 1호점</div>
+      <button class="player-cta" onclick="closePreviewModal();goStage(4)">💳 &nbsp;전체 영상 구매하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 모달: 개인정보처리방침 ════ -->
+<div class="modal-overlay" id="privacyModal">
+  <div class="modal privacy-modal" style="max-height:85vh;">
+    <div class="modal-header">
+      <div class="modal-title">📋 개인정보처리방침</div>
+      <button class="modal-close" onclick="closePrivacyModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="privacy-section">
+        <h3>1. 수집하는 개인정보 항목</h3>
+        <ul>
+          <li>촬영 영상 및 사진 (노래방 내 촬영분)</li>
+          <li>결제 정보 (결제 수단, 거래 번호)</li>
+          <li>연락처 (카카오톡 전송 시 사용)</li>
+        </ul>
+      </div>
+      <div class="privacy-section">
+        <h3>2. 수집 및 이용 목적</h3>
+        <ul>
+          <li>AI 영상 편집 및 베스트컷 선별 서비스 제공</li>
+          <li>결제 처리 및 콘텐츠 전달</li>
+          <li>서비스 품질 향상을 위한 통계 분석</li>
+        </ul>
+      </div>
+      <div class="privacy-section">
+        <h3>3. 보유 및 이용 기간</h3>
+        <p>촬영 원본 영상 및 사진은 <strong style="color:var(--green)">서비스 제공 후 7일 이내 자동 삭제</strong>됩니다.<br>결제 정보는 관련 법령에 따라 5년간 보관됩니다.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>4. 제3자 제공</h3>
+        <p>수집된 개인정보는 원칙적으로 제3자에게 제공하지 않습니다. 단, 이용자가 SNS 공유에 동의한 경우에 한해 해당 플랫폼에 업로드될 수 있습니다.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>5. 이용자의 권리</h3>
+        <ul>
+          <li>개인정보 열람, 수정, 삭제 요청 가능</li>
+          <li>동의 철회 시 즉시 데이터 삭제 처리</li>
+          <li>문의: stargate@karaoke.ai</li>
+        </ul>
+      </div>
+      <div class="privacy-section">
+        <h3>6. 촬영 동의</h3>
+        <p>노래방 이용 시 AI 서비스 안내문을 확인하고 QR코드를 스캔함으로써 촬영 및 AI 분석에 동의한 것으로 간주합니다.</p>
+      </div>
+      <button class="privacy-agree-btn" onclick="closePrivacyModal()">확인했습니다</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL=47;
+const picks=[2,5,8,12,17,23,28,33,38,44];
+const emos=['🎤','🎵','🎶','⭐','🌟','💫','✨','🎸','🎹','🎺','🎻','🥁','🎼','🎤','🎵','🎶','⭐','🌟','💫','✨','🎸','🎹','🎺','🎻','🥁','🎼','🎤','🎵','🎶','⭐','🌟','💫','✨','🎸','🎹','🎺','🎻','🥁','🎼','🎤','🎵','🎶','⭐','🌟','💫','✨','🎸'];
+const cuts=[
+  {r:'🥇',sc:99,l:'최고 표정',e:'🎤',hero:true},
+  {r:'#2',sc:97,l:'하이라이트',e:'🌟'},{r:'#3',sc:96,l:'완벽 구도',e:'✨'},
+  {r:'#4',sc:95,l:'감정 최고',e:'💫'},{r:'#5',sc:94,l:'조명 완벽',e:'⭐'},
+  {r:'#6',sc:93,l:'역동적',e:'🎵'},{r:'#7',sc:92,l:'자연스러운',e:'🎶'},
+  {r:'#8',sc:91,l:'포커스 선명',e:'🎸'},{r:'#9',sc:90,l:'균형잡힌',e:'🎹'},{r:'#10',sc:89,l:'마무리컷',e:'🎼'},
+];
+const bgs=['linear-gradient(135deg,#1a0a2e,#0d1a3a)','linear-gradient(135deg,#0a1520,#1a0a2e)','linear-gradient(135deg,#0d1a2e,#1a0d1a)','linear-gradient(135deg,#1a1a0a,#0a1a1a)','linear-gradient(135deg,#0a0a1a,#1a0a0a)'];
+const prices=[1500,2000,3000];
+const methodNames=['카카오페이로','토스페이로','네이버페이로','휴대폰으로'];
+
+let selProduct=2, selMethodNum=1;
+
+function updateNav(n){
+  for(let i=1;i<=5;i++){
+    const d=document.getElementById('dot'+i),l=document.getElementById('lbl'+i);
+    d.classList.remove('active','done');l.classList.remove('active','done');
+    if(i<n){d.classList.add('done');d.textContent='✓';l.classList.add('done');}
+    else if(i===n){d.classList.add('active');d.textContent=i;l.classList.add('active');}
+    else{d.textContent=i;}
+    if(i<5){document.getElementById('line'+i).classList.toggle('done',i<n);}
+  }
+}
+
+function goStage(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  window.scrollTo(0,0); updateNav(n);
+  if(n===2)startAnalysis();
+  if(n===3)buildPreview();
+  if(n===5)buildResult();
+}
+
+// AI 분석
+function startAnalysis(){
+  const g=document.getElementById('tGrid');g.innerHTML='';
+  for(let i=0;i<TOTAL;i++){const t=document.createElement('div');t.className='th';t.id='th'+i;t.innerHTML=`<span style="opacity:0.35">${emos[i]}</span><div class="th-ov">✓</div>`;g.appendChild(t);}
+  [[`f1`,`st1`,100],[`f2`,`st2`,900],[`f3`,`st3`,1700],[`f4`,`st4`,2500]].forEach(([f,s,d])=>{
+    setTimeout(()=>{const st=document.getElementById(s);st.textContent='분석중';let w=0;const iv=setInterval(()=>{w+=4;document.getElementById(f).style.width=w+'%';if(w>=100){clearInterval(iv);st.textContent='완료✓';st.classList.add('done');}},18);},d);
+  });
+  const lbls=['표정 분석 중...','조명 품질 검사 중...','구도 최적화 중...','하이라이트 감지 중...','베스트컷 선별 중...'];
+  let li=0;const lIv=setInterval(()=>{document.getElementById('aiLbl').textContent=lbls[Math.min(li++,lbls.length-1)];if(li>=lbls.length)clearInterval(lIv);},900);
+  let cur=0;
+  const sIv=setInterval(()=>{
+    if(cur>=TOTAL){clearInterval(sIv);setTimeout(()=>goStage(3),700);return;}
+    const t=document.getElementById('th'+cur);t.classList.add('scan');
+    setTimeout(()=>{t.classList.remove('scan');if(picks.includes(cur)){t.classList.add('sel');}else if(Math.random()>0.35){t.classList.add('rej');}},260);
+    cur++;
+    const p=Math.round((cur/TOTAL)*100);
+    document.getElementById('pNum').textContent=p+'%';
+    document.getElementById('pCnt').textContent=cur;
+    document.getElementById('pFill').style.width=p+'%';
+  },85);
+}
+
+// 미리보기 썸네일
+function buildPreview(){
+  const g=document.getElementById('miniGrid');g.innerHTML='';
+  cuts.forEach((c,i)=>{
+    const d=document.createElement('div');d.className='mini-th'+(i===0?' atv':'');
+    d.style.background=bgs[i%bgs.length];
+    d.innerHTML=`<div class="mini-bg">${c.e}</div><div class="mini-sc">★${c.sc}</div>`;
+    d.onclick=()=>{document.querySelectorAll('.mini-th').forEach(x=>x.classList.remove('atv'));d.classList.add('atv');};
+    g.appendChild(d);
+  });
+}
+
+// 결과 베스트컷
+function buildResult(){
+  const g=document.getElementById('bcGrid');g.innerHTML='';
+  cuts.forEach((c,i)=>{
+    const el=document.createElement('div');el.className='bc'+(c.hero?' hero':'');
+    el.style.cssText=`background:${bgs[i%bgs.length]};animation-delay:${i*0.06}s`;
+    el.innerHTML=`<div class="bc-glow"></div><span class="bc-em">${c.e}</span><div class="bc-rank">${c.r}</div><div class="bc-lbl">${c.l}</div><div class="bc-score">★${c.sc}</div>`;
+    g.appendChild(el);
+  });
+}
+
+// 상품 선택
+function selPay(n){
+  selProduct=n;
+  [1,2,3].forEach(i=>{
+    const c=document.getElementById('pc'+i);
+    c.classList.toggle('active',i===n);
+    c.querySelector('.check').textContent=i===n?'✓':'';
+  });
+  updateTotal();
+}
+
+// 결제 수단 선택
+function selMethod(n){
+  selMethodNum=n;
+  [1,2,3,4].forEach(i=>{
+    const m=document.getElementById('pm'+i);
+    m.classList.toggle('selected',i===n);
+    m.querySelector('.method-check').textContent=i===n?'✓':'';
+  });
+  const btn=document.getElementById('payBtn');
+  btn.textContent=methodNames[n-1]+' 결제하기';
+  updateTotal();
+}
+
+function updateTotal(){
+  let price=prices[selProduct-1];
+  const c2=document.getElementById('chk2');
+  if(c2.classList.contains('on')&&selProduct>=2) price-=500;
+  document.getElementById('totalPrice').textContent=price.toLocaleString()+'원';
+}
+
+function tgC(){const c=document.getElementById('chk2');c.classList.toggle('on');c.textContent=c.classList.contains('on')?'✓':'';updateTotal();}
+function tgC3(){const c=document.getElementById('chk3');c.classList.toggle('on');c.textContent=c.classList.contains('on')?'✓':'';}
+
+// 결제 처리
+function doPay(){
+  const btn=document.getElementById('payBtn');
+  btn.textContent='처리 중...';btn.style.opacity='0.7';btn.disabled=true;
+  setTimeout(()=>goStage(5),1800);
+}
+
+// ── 미리보기 모달 ──
+let playing=false, playTimer=null, elapsed=0;
+
+function openPreviewModal(){
+  document.getElementById('previewModal').classList.add('open');
+  resetPlayer();
+}
+function closePreviewModal(){
+  document.getElementById('previewModal').classList.remove('open');
+  stopPlay();
+}
+function resetPlayer(){
+  stopPlay();elapsed=0;playing=false;
+  document.getElementById('playerFill').style.width='0%';
+  document.getElementById('playerTime').textContent='0:00';
+  document.getElementById('playerBtn').textContent='▶';
+  document.getElementById('playerLabel').textContent='탭하여 재생';
+}
+function togglePlay(){
+  if(elapsed>=15){resetPlayer();return;}
+  playing=!playing;
+  document.getElementById('playerBtn').textContent=playing?'⏸':'▶';
+  document.getElementById('playerLabel').textContent=playing?'재생 중...':'일시정지';
+  if(playing){
+    playTimer=setInterval(()=>{
+      elapsed+=0.5;
+      const pct=(elapsed/15)*100;
+      document.getElementById('playerFill').style.width=pct+'%';
+      const s=Math.floor(elapsed);document.getElementById('playerTime').textContent='0:'+String(s).padStart(2,'0');
+      if(elapsed>=15){clearInterval(playTimer);playing=false;document.getElementById('playerBtn').textContent='↺';document.getElementById('playerLabel').textContent='다시 보기';}
+    },500);
+  }else{clearInterval(playTimer);}
+}
+function stopPlay(){if(playTimer)clearInterval(playTimer);playing=false;}
+
+// ── 개인정보 모달 ──
+function openPrivacyModal(){document.getElementById('privacyModal').classList.add('open');}
+function closePrivacyModal(){document.getElementById('privacyModal').classList.remove('open');}
+
+// 오버레이 클릭으로 닫기
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o){o.classList.remove('open');stopPlay();}});
+});
+</script>
+</body>
+</html>
