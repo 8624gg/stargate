@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>STAR GATE – AI 숏폼 영상 자동 제작</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --neon-pink: #ff2d78;
+      --neon-cyan: #00f0ff;
+      --neon-gold: #ffd700;
+      --deep-bg: #050510;
+      --card-bg: rgba(255,255,255,0.04);
+      --glow-pink: 0 0 24px rgba(255,45,120,0.7);
+      --glow-cyan: 0 0 24px rgba(0,240,255,0.7);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--deep-bg);
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── 배경 파티클 / 그리드 ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── 헤더 Hero ── */
+    header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 36px;
+      text-align: center;
+    }
+
+    .badge {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--neon-cyan);
+      border: 1px solid var(--neon-cyan);
+      padding: 4px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      animation: fadein 0.8s ease both;
+      text-shadow: var(--glow-cyan);
+      box-shadow: 0 0 8px rgba(0,240,255,0.3);
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(36px, 12vw, 64px);
+      letter-spacing: 3px;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 0%, var(--neon-cyan) 50%, var(--neon-pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadein 0.9s ease both 0.1s;
+      filter: drop-shadow(0 0 20px rgba(0,240,255,0.4));
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--neon-gold) 0%, #ff9f00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+      line-height: 1.7;
+      animation: fadein 1s ease both 0.2s;
+    }
+
+    /* ── 메인 CTA 버튼 ── */
+    .cta-wrap {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 0 24px 40px;
+      animation: fadein 1s ease both 0.4s;
+    }
+
+    .cta-main {
+      width: 100%;
+      max-width: 360px;
+      padding: 18px 0;
+      border: none;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--neon-pink) 0%, #b8005e 100%);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      box-shadow: var(--glow-pink), inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: transform 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .cta-main:active { transform: scale(0.97); }
+    .cta-main:hover {
+      box-shadow: 0 0 40px rgba(255,45,120,0.9), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .cta-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+    }
+
+    /* ── 섹션 공통 ── */
+    section {
+      position: relative;
+      z-index: 2;
+      padding: 0 20px 40px;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--neon-cyan);
+      text-align: center;
+      margin-bottom: 24px;
+      opacity: 0.8;
+    }
+
+    /* ── 작동 방식 카드 ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(0,240,255,0.12);
+      border-radius: 8px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.3s;
+      animation: slidein 0.6s ease both;
+    }
+
+    .step-card:nth-child(1) { animation-delay: 0.1s; }
+    .step-card:nth-child(2) { animation-delay: 0.2s; }
+    .step-card:nth-child(3) { animation-delay: 0.3s; }
+    .step-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .step-card:hover { border-color: rgba(0,240,255,0.4); }
+
+    .step-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      min-width: 36px;
+      text-shadow: var(--glow-cyan);
+      line-height: 1;
+    }
+
+    .step-icon {
+      font-size: 28px;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .step-info h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 3px;
+      color: #fff;
+    }
+
+    .step-info p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.5;
+    }
+
+    /* ── 특징 그리드 ── */
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .feat-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,45,120,0.12);
+      border-radius: 8px;
+      padding: 20px 16px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .feat-card:hover {
+      border-color: rgba(255,45,120,0.4);
+      transform: translateY(-3px);
+    }
+
+    .feat-icon { font-size: 30px; margin-bottom: 10px; display: block; }
+
+    .feat-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .feat-desc {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.4;
+    }
+
+    /* ── 통계 바 ── */
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      max-width: 400px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 8px;
+      padding: 24px 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat { text-align: center; }
+
+    .stat-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--neon-gold);
+      text-shadow: 0 0 16px rgba(255,215,0,0.6);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+    }
+
+    /* ── SNS 공유 preview ── */
+    .share-preview {
+      max-width: 400px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, rgba(255,45,120,0.08) 0%, rgba(0,240,255,0.08) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .share-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .share-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .share-platforms {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .platform-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s, opacity 0.2s;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .platform-btn:hover { transform: scale(1.06); opacity: 0.9; }
+
+    .btn-tiktok { background: #010101; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-instagram { background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); }
+    .btn-youtube { background: #ff0000; }
+    .btn-naver { background: #03c75a; }
+
+    /* ── 하단 footer ── */
+    footer {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 24px 20px 48px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .footer-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 6px;
+    }
+
+    .footer-copy {
+      font-size: 10px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ── 분리선 ── */
+    .divider {
+      max-width: 400px;
+      margin: 0 auto 36px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,240,255,0.2), transparent);
+    }
+
+    /* ── 애니메이션 ── */
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slidein {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: var(--glow-pink); }
+      50% { box-shadow: 0 0 60px rgba(255,45,120,0.9); }
+    }
+
+    .cta-main { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+    /* ── 상단 알림 띠 ── */
+    .topbar {
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(90deg, var(--neon-pink), #8800ff, var(--neon-cyan));
+      padding: 8px 0;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .topbar::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ── 흐르는 별 배경 ── */
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite var(--del, 0s);
+      opacity: 0;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; }
+      50% { opacity: var(--op, 0.6); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 별 배경 -->
+<div class="stars" id="stars"></div>
+<div class="noise"></div>
+
+<!-- 상단 알림 띠 -->
+<div class="topbar">⚡ AI가 노래방 영상을 자동으로 편집해드립니다 ⚡</div>
+
+<!-- Hero -->
+<header>
+  <div class="badge">AI KARAOKE VIDEO SYSTEM</div>
+  <div class="logo">STAR<span>GATE</span></div>
+  <p class="tagline">
+    노래방에서 부른 내 노래,<br>
+    AI가 <strong style="color:var(--neon-cyan)">10초 만에</strong> 숏폼 영상으로 만들어드립니다
+  </p>
+</header>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <a href="#" class="cta-main">🎤 &nbsp;지금 영상 받기</a>
+  <p class="cta-sub">회원가입 불필요 · 완전 무료</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- 작동 방식 -->
+<section>
+  <p class="section-title">HOW IT WORKS</p>
+  <div class="steps">
+    <div class="step-card">
+      <span class="step-num">01</span>
+      <span class="step-icon">🎙️</span>
+      <div class="step-info">
+        <h3>노래하세요</h3>
+        <p>평소처럼 노래방에서 신나게 노래하면 됩니다</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <span class="step-num">02</span>
+      <span class="step-icon">🤖</span>
+      <div class="step-info">
+        <h3>AI가 자동 편집</h3>
+        <p>하이라이트 구간 추출 · 가사 자막 생성 · 이펙트 적용</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <span class="step-num">03</span>
+      <span class="step-icon">📲</span>
+      <div class="step-info">
+        <h3>링크로 수신</h3>
+        <p>카카오톡 또는 문자로 완성된 영상을 바로 받아보세요</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <span class="step-num">04</span>
+      <span class="step-icon">🚀</span>
+      <div class="step-info">
+        <h3>SNS에 공유</h3>
+        <p>틱톡 · 인스타 릴스 · 유튜브 쇼츠에 바로 업로드</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 특징 -->
+<section>
+  <p class="section-title">FEATURES</p>
+  <div class="features">
+    <div class="feat-card">
+      <span class="feat-icon">⚡</span>
+      <div class="feat-label">10초 완성</div>
+      <div class="feat-desc">AI 자동 편집으로 즉시 완성</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🎬</span>
+      <div class="feat-label">세로형 숏폼</div>
+      <div class="feat-desc">SNS 최적화 9:16 포맷</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🌟</span>
+      <div class="feat-label">AI 자막</div>
+      <div class="feat-desc">정확한 한국어 가사 자막</div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🎨</span>
+      <div class="feat-label">이펙트 자동</div>
+      <div class="feat-desc">분위기별 영상 효과 적용</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 통계 -->
+<section>
+  <p class="section-title">IMPACT</p>
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-num">10<small style="font-size:14px">초</small></span>
+      <div class="stat-label">영상 생성 시간</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">9:16</span>
+      <div class="stat-label">숏폼 최적 비율</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">4개</span>
+      <div class="stat-label">플랫폼 동시 공유</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SNS 공유 -->
+<section>
+  <p class="section-title">SHARE</p>
+  <div class="share-preview">
+    <div class="share-title">🎵 완성된 영상을 바로 공유하세요</div>
+    <div class="share-desc">
+      내 노래방 영상을 친구들에게 자랑하고<br>인플루언서 도전까지!
+    </div>
+    <div class="share-platforms">
+      <a href="#" class="platform-btn btn-tiktok">
+        <span>♪</span> TikTok
+      </a>
+      <a href="#" class="platform-btn btn-instagram">
+        <span>◈</span> Instagram
+      </a>
+      <a href="#" class="platform-btn btn-youtube">
+        <span>▶</span> YouTube
+      </a>
+      <a href="#" class="platform-btn btn-naver">
+        <span>N</span> Naver
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">STAR GATE</div>
+  <div class="footer-copy">© 2025 STAR GATE. AI Karaoke Video System.<br>문의: contact@stargate.ai</div>
+</footer>
+
+<script>
+  // 별 파티클 생성
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      --dur: ${2 + Math.random() * 4}s;
+      --del: ${Math.random() * 4}s;
+      --op: ${0.3 + Math.random() * 0.7};
+      width: ${Math.random() > 0.8 ? 3 : 2}px;
+      height: ${Math.random() > 0.8 ? 3 : 2}px;
+    `;
+    starsEl.appendChild(s);
+  }
+
+  // 스크롤 진입 시 카드 페이드
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.feat-card, .stats, .share-preview').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
